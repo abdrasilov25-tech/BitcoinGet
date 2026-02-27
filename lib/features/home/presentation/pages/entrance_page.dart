@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:bazar/core/state/app_session.dart';
 
 class EntrancePage extends StatefulWidget {
   const EntrancePage({super.key});
@@ -12,8 +14,8 @@ class _EntrancePageState extends State<EntrancePage>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
-  bool _showBasket = false;
-  double _dragDistance = 0.0;
+  final TextEditingController _phoneController = TextEditingController();
+  bool _isSeller = false;
 
   @override
   void initState() {
@@ -45,109 +47,235 @@ class _EntrancePageState extends State<EntrancePage>
   @override
   void dispose() {
     _animationController.dispose();
+    _phoneController.dispose();
     super.dispose();
+  }
+
+  Future<void> _continueAsBuyer() async {
+    if (!mounted) return;
+    context.read<AppSession>().setBuyer();
+    Navigator.pushReplacementNamed(context, '/main');
+  }
+
+  Future<void> _continueAsSeller() async {
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Введите номер WhatsApp продавца')),
+      );
+      return;
+    }
+    if (!mounted) return;
+    context.read<AppSession>().setSeller(phone: phone);
+    Navigator.pushReplacementNamed(context, '/main');
+  }
+
+  Widget _modeCard({
+    required bool selected,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected
+                ? Theme.of(context).colorScheme.primary
+                : const Color(0xFFDEE2E6),
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: selected
+                    ? Theme.of(context).colorScheme.primary.withAlpha(18)
+                    : const Color(0xFFF4F5F7),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                icon,
+                color: selected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.black54,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.black54,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              selected ? Icons.check_circle : Icons.circle_outlined,
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.black26,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Анимированный логотип Bazar
-            ScaleTransition(
-              scale: _scaleAnimation,
-              child: FadeTransition(
-                opacity: _opacityAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.asset(
-                      "assets/icons/bazar.png",
-                      width: 300,
-                      height: 300,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 60),
-            // Animated text
-            GestureDetector(
-              onHorizontalDragStart: (details) {
-                _dragDistance = 0.0;
-              },
-              onHorizontalDragUpdate: (details) {
-                _dragDistance += details.delta.dx;
-              },
-              onHorizontalDragEnd: (details) {
-                if (_dragDistance > 50) {
-                  setState(() => _showBasket = true);
-                }
-              },
-              child: ScaleTransition(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ScaleTransition(
                 scale: _scaleAnimation,
                 child: FadeTransition(
                   opacity: _opacityAnimation,
-                  child: Text(
-                    'к покупкам',
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 48,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 6,
-                              offset: const Offset(2, 2),
-                            ),
-                          ],
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.asset(
+                          'assets/icons/bazar.png',
+                          width: 54,
+                          height: 54,
+                          fit: BoxFit.cover,
                         ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Bazar',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          Text(
+                            'Купи. Продай. Быстро.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            if (_showBasket)
-              AnimatedOpacity(
-                opacity: _showBasket ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 500),
-                child: const Icon(
-                  Icons.shopping_cart,
-                  size: 50,
-                  color: Colors.black,
-                ),
-              ),
-            const SizedBox(height: 30),
-            // Arrow button
-            GestureDetector(
-              onTap: () {
-                Navigator.pushReplacementNamed(context, '/home');
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+              const SizedBox(height: 18),
+              FadeTransition(
+                opacity: _opacityAnimation,
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Выберите режим',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 12),
+                        _modeCard(
+                          selected: !_isSeller,
+                          title: 'Покупатель',
+                          subtitle: 'Смотреть объявления и писать продавцу',
+                          icon: Icons.search_outlined,
+                          onTap: () => setState(() => _isSeller = false),
+                        ),
+                        const SizedBox(height: 10),
+                        _modeCard(
+                          selected: _isSeller,
+                          title: 'Продавец',
+                          subtitle: 'Размещать товары и принимать заявки',
+                          icon: Icons.storefront_outlined,
+                          onTap: () => setState(() => _isSeller = true),
+                        ),
+                        const SizedBox(height: 14),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 180),
+                          child: _isSeller
+                              ? Column(
+                                  key: const ValueKey('seller'),
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    TextField(
+                                      controller: _phoneController,
+                                      keyboardType: TextInputType.phone,
+                                      decoration: const InputDecoration(
+                                        labelText: 'WhatsApp номер',
+                                        hintText: 'Напр. +7 777 123 45 67',
+                                        prefixIcon: Icon(Icons.phone_outlined),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    ElevatedButton(
+                                      onPressed: _continueAsSeller,
+                                      child: const Text('Продолжить'),
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  key: const ValueKey('buyer'),
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: _continueAsBuyer,
+                                      child: const Text('Перейти к покупкам'),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.arrow_forward,
-                  size: 32,
-                  color: Colors.blue.shade600,
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              FadeTransition(
+                opacity: _opacityAnimation,
+                child: Text(
+                  'Продолжая, вы соглашаетесь с правилами сервиса Bazar.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: Colors.black45),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

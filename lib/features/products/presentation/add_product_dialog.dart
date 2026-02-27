@@ -16,7 +16,7 @@ class AddProductPage extends StatefulWidget {
 class _AddProductPageState extends State<AddProductPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
-  String _image = "assets/icons/fruits.png"; // по умолчанию
+  final String _image = "assets/icons/fruits.png"; // по умолчанию
   bool _isLoading = false;
 
   void _showSnackBar(String text) {
@@ -39,7 +39,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
     try {
       // Вставка данных в Supabase 2.x
-      final inserted = await Supabase.instance.client
+      await Supabase.instance.client
           .from('products') // имя таблицы в Supabase
           .insert({
             'title': title,
@@ -49,12 +49,16 @@ class _AddProductPageState extends State<AddProductPage> {
           })
           .select(); // select() вернёт вставленные данные
 
+      if (!mounted) return;
       _showSnackBar("Продукт добавлен!");
       Navigator.pop(context);
     } catch (e) {
+      if (!mounted) return;
       _showSnackBar("Ошибка: $e");
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

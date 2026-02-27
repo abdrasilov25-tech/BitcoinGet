@@ -20,83 +20,61 @@ class _ProductsPageState extends State<ProductsPage> {
     {"title": "Рыба", "image": "assets/icons/fish.png"},
   ];
 
-  // Список товаров
-  List<Map<String, dynamic>> products = [];
-
-  @override
-  void initState() {
-    super.initState();
-    // Можно добавить несколько товаров по умолчанию
-    products = [
-      {"title": "Яблоко", "price": 150, "image": "assets/icons/fruits.png", "category": "Фрукты"},
-      {"title": "Молоко", "price": 250, "image": "assets/icons/dairy.png", "category": "Молочные"},
-      {"title": "Морковь", "price": 100, "image": "assets/icons/vegetables.png", "category": "Овощи"},
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Категории"),
-        centerTitle: true,
+        title: const Text("Bazar • Продукты"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(12),
-        child: GridView.builder(
-          itemCount: categories.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1,
-          ),
-          itemBuilder: (context, index) {
-            final category = categories[index];
-            return GestureDetector(
-              onTap: () {
-                // Фильтруем товары по категории
-                final categoryProducts = products
-                    .where((p) => p["category"] == category["title"])
-                    .toList();
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AllProductsPage(
-                      products: categoryProducts,
-                      onAddProduct: (newProduct) {
-                        setState(() {
-                          products.add(newProduct);
-                        });
-                      },
-                      categoryName: category["title"]!,
-                    ),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: categories.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 10),
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          return InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AllProductsPage(
+                    categoryName: category["title"]!,
                   ),
-                );
-              },
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                ),
+              );
+            },
+            child: Ink(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFDEE2E6)),
+              ),
+              child: Row(
                 children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.asset(
-                        category["image"]!,
-                        fit: BoxFit.cover,
-                      ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.asset(
+                      category["image"]!,
+                      width: 52,
+                      height: 52,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    category["title"]!,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      category["title"]!,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    ),
                   ),
+                  const Icon(Icons.chevron_right, color: Colors.black38),
                 ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 
 // Bloc и UseCase
 import 'features/home/usecases/get_market_categories.dart';
 import 'features/home/data/repositories/market_repository_impl.dart';
 import 'features/home/presentation/cubit/market_cubit.dart';
 import 'core/routes/app_router.dart';
+import 'core/state/app_session.dart';
+import 'core/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,18 +62,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => MarketCubit(useCase),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          textTheme: GoogleFonts.poppinsTextTheme(),
+    return ChangeNotifierProvider(
+      create: (_) => AppSession(),
+      child: BlocProvider(
+        create: (_) => MarketCubit(useCase),
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+          onGenerateRoute: AppRouter.generateRoute,
+          // Для проверки Supabase можно временно поставить:
+          // home: Scaffold(body: Center(child: Text('Supabase ready!'))),
+          initialRoute: '/',
         ),
-        onGenerateRoute: AppRouter.generateRoute,
-        // Для проверки Supabase можно временно поставить:
-        // home: Scaffold(body: Center(child: Text('Supabase ready!'))),
-        initialRoute: '/',
       ),
     );
   }
